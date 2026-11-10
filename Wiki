@@ -1,0 +1,190 @@
+# AutoWifi Wiki & Documentation
+
+Welcome to the official **AutoWifi** Wiki. This guide covers everything from initial setup and permissions to advanced protocol configurations, reverse hotspot sharing, and troubleshooting.
+
+---
+
+## 📑 Table of Contents
+
+1. [Installation & Permissions](#1-installation--permissions)
+2. [Quick Start Guide](#2-quick-start-guide)
+3. [Network Modes Explained](#3-network-modes-explained)
+   - [Wi-Fi Mode](#wi-fi-mode)
+   - [Direct Mode](#direct-mode)
+4. [Protocol Deep-Dive](#4-protocol-deep-dive)
+   - [SOCKS Proxy Mode](#socks-proxy-mode)
+   - [VPN Mode & App-Split Tunneling](#vpn-mode--app-split-tunneling)
+   - [SSH Tunneling](#ssh-tunneling)
+   - [Port Forwarding Only](#port-forwarding-only)
+5. [The Reverse Hotspot Guide](#5-the-reverse-hotspot-guide)
+6. [Profiles & Settings Management](#6-profiles--settings-management)
+7. [Network Diagnostic Tools](#7-network-diagnostic-tools)
+8. [Troubleshooting & FAQs](#8-troubleshooting--faqs)
+
+---
+
+## 1. Installation & Permissions
+
+AutoWifi interacts deeply with Android's network virtualization and hardware adapters. Upon launching the app for the first time, you will be prompted through an onboarding flow to grant the following permissions:
+
+| Permission | Android Level | Purpose |
+| :--- | :--- | :--- |
+| **Location (`ACCESS_FINE_LOCATION`)** | All | Required by Android to read Wi-Fi SSIDs, BSSIDs, and signal levels. *(AutoWifi does NOT track or store your physical GPS location).* |
+| **Nearby Wi-Fi Devices (`NEARBY_WIFI_DEVICES`)** | Android 12+ | Allows scanning and discovering local Wi-Fi networks without accessing coarse GPS data. |
+| **Notifications (`POST_NOTIFICATIONS`)** | Android 13+ | Displays the persistent foreground service notification showing live transfer speeds, IP status, and connection states. |
+| **VPN Service (`BIND_VPN_SERVICE`)** | All | Prompts system VPN confirmation dialog when running in VPN mode to route traffic through the virtual TUN adapter. |
+| **Query All Packages (`QUERY_ALL_PACKAGES`)** | Android 11+ | Enables the App-Split picker to populate all installed apps, services, and add-ons so you can choose which apps route through Wi-Fi. |
+| **Biometrics (`USE_BIOMETRIC`)** | All | Protects masked passwords (Wi-Fi and SSH) and profile edits with your fingerprint or face recognition. |
+
+---
+
+## 2. Quick Start Guide
+
+```
+Step 1: Select Network Mode (Wi-Fi Mode or Direct Mode)
+        │
+Step 2: Enter Wi-Fi SSID & Password (or pick from Scan dialog)
+        │
+Step 3: Select Protocol (SSH / SOCKS / VPN / P.F Only)
+        │
+Step 4: Tap Save (Locks inputs & updates active configuration)
+        │
+Step 5: Tap "Start" (Initiates background foreground service)
+```
+
+1. Open **AutoWifi**.
+2. Set the **Network Mode** spinner to **Wi-Fi Mode**.
+3. Tap the Wi-Fi icon next to the SSID field to scan nearby access points, or type your Wi-Fi SSID manually.
+   - For open networks (no password), leave the password field blank.
+4. Select your desired protocol:
+   - **SOCKS**: Launches a local SOCKS5 proxy on `0.0.0.0:9999`.
+   - **VPN**: Creates a system VPN tunnel with optional per-app routing.
+   - **SSH**: Connects to your SSH server for encrypted dynamic forwarding.
+   - **P.F only**: Applies standalone local/remote port forward rules.
+5. Tap **Save** to lock the profile.
+6. Tap the large **Start** button at the bottom. The button will turn red and read **"Started"**, and the persistent notification bar will display live connection stats.
+
+---
+
+## 3. Network Modes Explained
+
+### Wi-Fi Mode
+- **What it does**: Connects to the designated Wi-Fi network as a secondary network interface while preserving your active Cellular connection.
+- **Routing**: Your selected protocol traffic is routed through the Wi-Fi interface, while general background traffic and non-selected apps continue to use Cellular data.
+- **Use case**: Browsing high-bandwidth media through a local Wi-Fi while keeping secure business apps, VoIP, or cellular banking active on 4G/5G.
+
+### Direct Mode
+- **What it does**: Does not attempt to connect or bind to a specific Wi-Fi SSID. Instead, it starts the local services (such as the SOCKS5 proxy server or SSH client) on whichever network connection is currently active on your device.
+- **Use case**: Local testing, direct SSH tunnels over your current cellular network, or running the SOCKS server on your existing home Wi-Fi network without requiring AutoWifi to manage the connection.
+
+---
+
+## 4. Protocol Deep-Dive
+
+### SOCKS Proxy Mode
+AutoWifi includes an embedded multi-threaded SOCKS5 proxy server.
+- **Universal Port**: Default is `9999` (configurable between `1024` and `65535` in Settings).
+- **Wi-Fi Route (Default)**: Outgoing connections from the proxy are bound to the Wi-Fi network. Any client connecting to your phone's proxy IP at port `9999` routes traffic through Wi-Fi.
+- **Cellular Route**: Outgoing connections are bound to Cellular, while listening for incoming clients on the local Wi-Fi interface.
+
+### VPN Mode & App-Split Tunneling
+VPN mode creates an Android `VpnService` TUN interface that intercepts device IP packets.
+- **Route All Apps**: All applications on your device route their internet traffic through the Wi-Fi tunnel. AutoWifi itself is excluded to prevent an infinite loop.
+- **App-Split Mode**:
+  1. Open **Settings** (gear icon in the top right).
+  2. Select **App-Split (Selected Apps use Wi-Fi, rest use Cellular)**.
+  3. Tap **Select Apps for Wi-Fi VPN**.
+  4. Check the specific apps that should use Wi-Fi (e.g., YouTube, Netflix, Torrent clients, browsers).
+  5. Tap **Save & Apply**.
+  6. All unchecked apps will seamlessly route through your cellular data!
+
+### SSH Tunneling
+Connect to any Linux/Unix SSH server over the Wi-Fi interface.
+- **Server IP / Hostname**: IP address or domain of the remote SSH server.
+- **Port**: Default SSH port is `22`.
+- **Authentication**: Username and password. (Stored securely using SharedPreferences with optional biometric unmasking).
+- **Dynamic Forwarding**: Automatically sets up an SSH SOCKS5 proxy through the encrypted tunnel.
+- **Remote Forwarding**: Forwards ports from the remote SSH server back to local ports on your phone.
+
+### Port Forwarding Only
+If you only need specific port redirection without running full VPN or proxy services:
+1. Select the **P.F only** radio button.
+2. Tap **Select Port Forward Rules**.
+3. Add custom Local Port Forwarding rules (`local_port -> destination_ip:destination_port`) or Remote Port Forwarding rules.
+4. AutoWifi manages the socket relays in the background.
+
+---
+
+## 5. The Reverse Hotspot Guide
+
+The **Reverse Hotspot** is a unique feature that lets you share your cellular data with another device without turning on your phone's hotspot:
+
+```
+┌────────────────────────────────────────────────────────┐
+│                      Friend's Phone                    │
+│  1. Turns on Mobile Hotspot (SSID: FriendWifi)         │
+│  2. Installs & opens 'tun2socks' from Play Store       │
+│  3. Sets Proxy Type: SOCKS5                            │
+│  4. Sets Proxy Server: <Your AutoWifi IP> (e.g. 192.168.43.50) │
+│  5. Sets Proxy Port: 9999                              │
+│  6. Taps Connect in tun2socks                          │
+└───────────────────────────▲────────────────────────────┘
+                            │ Wi-Fi Connection
+┌───────────────────────────▼────────────────────────────┐
+│                       Your Phone                       │
+│  1. Open AutoWifi                                      │
+│  2. SSID: FriendWifi (Friend's hotspot password)       │
+│  3. Go to Settings > SOCKS Routing > Select "Cellular" │
+│  4. Select SOCKS Mode and tap Start                    │
+│  5. Note the Wi-Fi IP displayed in yellow/green        │
+└───────────────────────────▲────────────────────────────┘
+                            │ Mobile Data
+                     4G / 5G Internet
+```
+
+---
+
+## 6. Profiles & Settings Management
+
+### Configuration Profiles
+- Tap **Profiles** on the main screen to open the Profile Manager.
+- **Add Profile**: Tap the `+` button in the top action bar to create a new profile with its own SSID, passwords, server parameters, and port forwarding rules.
+- **Activate**: Tap on any saved profile to load its values and set it as active.
+- **Edit / Delete**: Swipe or tap options to modify or remove obsolete profiles.
+- **Backup & Restore**: Export all your saved profiles and settings to an encrypted JSON backup file in your device's Downloads directory, or restore them onto a new device.
+
+### Settings Menu
+- **Universal Service Port**: Configure the local port for SOCKS and SSH forwarding. Includes an instant port availability test to warn if another service is using the port.
+- **VPN Routing Mode**: Switch between Full Device routing and App-Split mode.
+- **Advanced SOCKS Routing**: Switch outbound traffic between Wi-Fi and Cellular.
+- **Biometric App Lock**: Require fingerprint or face authentication whenever returning to AutoWifi from the background.
+- **Flush Settings**: Resets all parameters to factory defaults.
+
+---
+
+## 7. Network Diagnostic Tools
+
+Accessible from the top header bar:
+- **Ping Activity**: Test network latency to gateways or servers using ICMP or custom socket timeouts.
+- **Subnet Scanner**: Discover all active IPs on your local `/24` Wi-Fi network subnet to identify connected devices, routers, and IP cameras.
+- **Port Scanner**: Check open ports (`21`, `22`, `80`, `443`, `8080`, etc.) on target LAN or WAN IPs.
+- **Bonjour / mDNS Discovery**: Discover local network services (Apple AirPlay, printers, local servers) broadcasting via multicast DNS.
+
+---
+
+## 8. Troubleshooting & FAQs
+
+### Q: Why does AutoWifi show "SSID is empty"?
+**A**: In Wi-Fi Mode, AutoWifi requires a valid SSID to connect to. Enter your Wi-Fi name or tap the Wi-Fi icon next to the field to select from nearby scanned networks.
+
+### Q: Can AutoWifi connect to open (password-free) Wi-Fi networks?
+**A**: Yes. In Version 1.0.7+, leave the Wi-Fi password field blank. AutoWifi automatically detects that the network has no security encryption and connects without throwing an error.
+
+### Q: Why does the screen scroll when I tap Edit Profile?
+**A**: Tapping the Edit icon automatically centers the input card above your software keyboard so all fields and buttons remain fully visible and accessible without being occluded by the keyboard.
+
+### Q: Why does tapping outside lock the fields?
+**A**: AutoWifi protects against accidental credential modifications. Tapping outside the active edit rectangle safely locks all fields and restores saved profile parameters. To save your changes permanently, tap the **Save** button.
+
+### Q: How do I avoid high battery drain?
+**A**: VPN App-Split and SOCKS modes are highly optimized using native socket relays. However, keeping dual active transmitters (Cellular + Wi-Fi) active simultaneously naturally uses more power than a single radio. It is recommended to use AutoWifi while connected to power if streaming heavily.
