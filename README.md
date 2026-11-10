@@ -14,6 +14,9 @@ Built upon Android's advanced network binding and virtualization stack (`Network
 
 Whether you need to route bandwidth-heavy apps over an office Wi-Fi while keeping secure banking on 5G, tunnel traffic via dynamic SSH port forwarding, share your mobile data without toggling an Android hotspot, or automate roaming between Wi-Fi access points with the strongest BSSID, AutoWifi provides a unified control center on your phone.
 
+download now 
+https://play.google.com/store/apps/details?id=com.gyan.autowifi
+
 ---
 
 ## 🚀 Key Features
