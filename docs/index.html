@@ -163,6 +163,18 @@
     .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
       scroll-margin-top: 30px;
     }
+        /* Responsive Images & Google Play Badge */
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .markdown-body img[src*="badge"],
+    .markdown-body a[href*="play.google.com"] img {
+      max-width: 200px; /* Scales the Play badge to standard mobile badge size */
+      height: auto;
+      margin: 8px 0 16px 0;
+    }
     .markdown-body h1 {
       font-size: 26px;
       color: var(--primary);
