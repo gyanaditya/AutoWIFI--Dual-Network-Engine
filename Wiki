@@ -183,7 +183,7 @@ Confirm that Android's VPN prompt was approved, the intended routing mode and ap
 Keeping Wi-Fi and cellular active together and running a VPN or proxy can use more power. Stop the service when it is not needed and review Android's battery usage screen.
 
 ---
-[![YouTube video player](https://img.youtube.com/vi/-TWUAwIoM8M/0.jpg)](https://www.youtube.com/watch?v=vnnz_szNTP4)
+[![Watch on YouTube](https://img.youtube.com/vi/-TWUAwIoM8M/maxresdefault.jpg)](https://www.youtube.com/watch?v=-TWUAwIoM8M "Click to watch on YouTube")
 
 ## App and documentation links
 
